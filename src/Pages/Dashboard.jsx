@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import IntegrationStatus from "../components/IntegrationStatus.jsx";
+import MergeDecisionBanner from "../components/MergeDecisionBanner.jsx";
+import PRScoreCard from "../components/PRScoreCard.jsx";
+import PRHeatmap from "../components/PRHeatmap.jsx";
+import TopIssuesPanel from "../components/TopIssuesPanel.jsx";
+import QuickFixSuggestions from "../components/QuickFixSuggestions.jsx";
 import { fetchIntegrationStatus } from "../lib/api.js";
 
 const TIMELINE_TONES = ["accent", "danger", "warn", "success", "accent2"];
@@ -660,6 +665,30 @@ export default function Dashboard() {
             <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-7 px-4 py-6 md:gap-8 md:px-6 md:py-8">
               {!data ? <EmptyState /> : null}
               <Hero />
+
+              {data?.prScore ? <MergeDecisionBanner prScore={data.prScore} /> : null}
+
+              {data?.prScore ? <PRScoreCard prScore={data.prScore} /> : null}
+
+              {data?.actions?.topIssues?.length > 0 ? (
+                <TopIssuesPanel topIssues={data.actions.topIssues} />
+              ) : null}
+
+              {data ? <QuickFixSuggestions prismData={data} /> : null}
+
+              {data?.filesAnalyzed?.length > 0 ? (
+                <section className="prism-panel mt-2 p-6 md:p-7">
+                  <div className="mb-1 prism-eyebrow text-cyan-200/90 normal-case tracking-normal">
+                    PR Risk Concentration Map
+                  </div>
+                  <h2 className="prism-h3 text-white">File Risk Heatmap</h2>
+                  <p className="mt-1 mb-5 prism-body text-prism-muted">
+                    Per-file risk from diff size, path sensitivity, change type, and security
+                    signals
+                  </p>
+                  <PRHeatmap files={data.filesAnalyzed} />
+                </section>
+              ) : null}
 
               <IntegrationStatus
                 status={integrationStatus}

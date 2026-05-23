@@ -15,6 +15,9 @@ import {
   hasGithubToken,
 } from "./config/env.js";
 import { buildFallbackReview } from "./lib/reviewFallbacks.js";
+import { calculatePRScore } from "./lib/prScoreEngine.js";
+import { enrichFilesWithRisk } from "./lib/fileRiskEngine.js";
+import { generateActionLayer } from "./lib/actionEngine.js";
 
 /** Set false for hackathon/demo — always returns a full AI-style review without calling Gemini. */
 const USE_GEMINI = false;
@@ -83,13 +86,21 @@ app.post("/analyze-pr", async (req, res) => {
     const prData = prResponse.data;
     const filesData = filesResponse.data;
 
-    const filesAnalyzed = filesData.map((file) => ({
+    const filePatches = filesData.map((file) => ({
       name: file.filename,
-      additions: file.additions,
-      deletions: file.deletions,
-      changes: file.changes,
-      status: file.status,
+      patch: file.patch ?? "",
     }));
+
+    const filesAnalyzed = enrichFilesWithRisk(
+      filesData.map((file) => ({
+        name: file.filename,
+        additions: file.additions,
+        deletions: file.deletions,
+        changes: file.changes,
+        status: file.status,
+      })),
+      filePatches
+    );
 
     const githubMeta = {
       repoName: repo,
@@ -123,7 +134,20 @@ app.post("/analyze-pr", async (req, res) => {
       geminiApiUsed: aiReview.reviewMode === "ai",
     };
 
-    res.json(responseData);
+    const prScore = calculatePRScore({
+      githubMeta,
+      filesAnalyzed,
+      patches: filePatches,
+    });
+
+    const actions = generateActionLayer({
+      filesAnalyzed,
+      prScore,
+      aiReview,
+      githubMeta,
+    });
+
+    res.json({ ...responseData, prScore, actions });
   } catch (error) {
     console.error(error.response?.data || error.message);
 

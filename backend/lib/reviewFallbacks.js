@@ -345,6 +345,12 @@ export function buildFallbackReview({
     ),
   ];
 
+  const topSuggestions = buildTopSuggestions({
+    securityFindings,
+    performanceRisks,
+    maintainabilityIssues,
+  });
+
   return {
     summary: buildSummary(githubMeta, filesAnalyzed, overallRisk),
     mergeConfidence,
@@ -354,12 +360,35 @@ export function buildFallbackReview({
     maintainabilityIssues,
     humanRisks,
     reviewComments,
+    topSuggestions,
     aiAgents,
     timeline,
     reviewMode: "ai",
     geminiModel: "prism-simulated-engine",
     geminiTier: "demo",
   };
+}
+
+function buildTopSuggestions({ securityFindings, performanceRisks, maintainabilityIssues }) {
+  const pool = [
+    ...securityFindings.map((f) => ({ ...f, kind: "Security" })),
+    ...performanceRisks.map((f) => ({ ...f, kind: "Performance" })),
+    ...maintainabilityIssues.map((f) => ({ ...f, kind: "Maintainability" })),
+  ];
+
+  const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+  return pool
+    .sort((a, b) => (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9))
+    .slice(0, 6)
+    .map((f) => ({
+      priority: f.severity === "Critical" || f.severity === "High" ? f.severity : "Medium",
+      title: f.title,
+      file: f.file ?? "",
+      problem: f.description,
+      fix: `Apply ${f.kind.toLowerCase()} remediation: ${f.description}`,
+      impact: `${f.kind} risk on ${f.file || "this change set"}`,
+    }));
 }
 
 /** @deprecated Use buildFallbackReview — kept for imports */

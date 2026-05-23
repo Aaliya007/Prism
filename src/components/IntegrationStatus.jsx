@@ -83,7 +83,7 @@ export default function IntegrationStatus({ status, loading, error, compact = fa
         <div className="mb-4 border-b border-white/[0.08] pb-4">
           <h2 className="prism-h3 text-white">API integrations</h2>
           <p className="mt-1 prism-body text-prism-muted">
-            Connection status for GitHub and Gemini (keys stay on the server).
+            Connection status for GitHub and Gemini.
           </p>
         </div>
       ) : null}

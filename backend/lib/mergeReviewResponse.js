@@ -68,6 +68,8 @@ export function mergeReviewResponse(githubMeta, aiReview, filesAnalyzed) {
     humanRisks: review.humanRisks ?? [],
 
     reviewComments: review.reviewComments ?? [],
+    topSuggestions: review.topSuggestions ?? [],
+    topIssues: review.topIssues ?? [],
     timeline: review.timeline ?? [],
     filesAnalyzed,
 
