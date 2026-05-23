@@ -149,8 +149,8 @@ function ColumnHeader({ dotClass, title, count }) {
   return (
     <div className="mb-5 flex min-h-[2.75rem] items-center gap-2 border-b border-white/[0.08] pb-4">
       <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} />
-      <h3 className="prism-label text-2xl font-semibold text-white">{title}</h3>
-      <span className="ml-auto shrink-0 prism-eyebrow text-prism-muted normal-case tracking-normal text-[3rem] leading-none">
+      <h3 className="prism-h3 text-white">{title}</h3>
+      <span className="ml-auto shrink-0 prism-eyebrow text-prism-muted normal-case tracking-normal">
         {count}
       </span>
     </div>

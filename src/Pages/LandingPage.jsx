@@ -392,7 +392,7 @@ export default function LandingPage() {
       <section id="problem" className="relative prism-section">
         <div className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
           <div className="reveal max-w-2xl">
-            <div className="mb-5 prism-eyebrow text-fuchsia-300">
+            <div className="mb-5 prism-eyebrow text-2xl text-fuchsia-300">
               The problem
             </div>
             <h2 className="prism-h2 text-white">
@@ -501,7 +501,7 @@ export default function LandingPage() {
       <section id="features" className="relative prism-section">
         <div className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
           <div className="reveal max-w-2xl">
-            <div className="mb-5 prism-eyebrow text-violet-300">
+            <div className="mb-5 prism-eyebrow text-2xl text-violet-300">
               Core features
             </div>
             <h2 className="prism-h2 text-white">
@@ -619,7 +619,7 @@ export default function LandingPage() {
       <section id="workflow" className="relative prism-section">
         <div className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
           <div className="reveal max-w-2xl">
-            <div className="mb-5 prism-eyebrow text-cyan-200">
+            <div className="mb-5 prism-eyebrow text-2xl text-cyan-200">
               How it works
             </div>
             <h2 className="prism-h2 text-white">
@@ -662,157 +662,6 @@ export default function LandingPage() {
     );
   }
 
-  function DashboardShowcase() {
-    return (
-      <section className="relative prism-section">
-        <div className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
-          <div className="reveal max-w-2xl">
-            <div className="mb-5 prism-eyebrow text-cyan-200">
-              Dashboard showcase
-            </div>
-            <h2 className="prism-h2 text-white">
-              One operating surface for engineering review risk.
-            </h2>
-            <p className="mt-5 prism-body-lg text-prism-muted">
-              PRISM combines code review detail with organizational context so
-              teams can stop making merge decisions in fragments.
-            </p>
-          </div>
-
-          <div className="reveal prism-panel mt-14 p-5 md:mt-16 md:p-6">
-            <div className="flex flex-col gap-8">
-              <div className="rounded-2xl border border-white/[0.1] bg-white/[0.03] p-5">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <div className="text-lg font-semibold text-white">
-                      Activity timeline
-                    </div>
-                    <div className="text-sm text-prism-muted">
-                      Live events from active review session
-                    </div>
-                  </div>
-                  <div className="rounded-full border border-white/[0.06] bg-white/[0.04] px-3 py-1 text-xs text-prism-muted">
-                    Updated 12s ago
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    ["09:12", "PR #418 ingested", "accent"],
-                    ["09:15", "Security agent flagged token exposure", "danger"],
-                    ["09:18", "Performance regression predicted", "warn"],
-                    ["09:23", "Maintainability notes drafted", "success"],
-                  ].map(([time, title, tone], idx) => (
-                    <div
-                      key={idx}
-                      className="grid grid-cols-[56px_14px_1fr] items-start gap-3"
-                    >
-                      <div className="pt-0.5 font-mono text-xs text-prism-muted">
-                        {time}
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span
-                          className={`mt-1 h-3 w-3 rounded-full ${
-                            tone === "accent"
-                              ? "bg-cyan-300"
-                              : tone === "danger"
-                              ? "bg-rose-400"
-                              : tone === "warn"
-                              ? "bg-amber-300"
-                              : "bg-emerald-300"
-                          }`}
-                        />
-                        {idx < 3 && (
-                          <span className="absolute top-5 h-12 w-px bg-gradient-to-b from-white/20 to-transparent" />
-                        )}
-                      </div>
-                      <div className="rounded-2xl border border-white/[0.06] bg-[#0b131d] p-4">
-                        <div className="text-sm font-semibold text-white">{title}</div>
-                        <div className="mt-1 text-sm text-prism-muted">
-                          Real-time signal added to review state.
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/[0.1] bg-white/[0.03] p-5">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <div className="prism-h3 text-white">
-                      Code review panel
-                    </div>
-                    <div className="text-sm text-prism-muted">
-                      Ranked comments with context and severity
-                    </div>
-                  </div>
-                  <div className="rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-200">
-                    3 comments ready
-                  </div>
-                </div>
-
-                <div className="grid gap-4">
-                  {[
-                    ["Critical", "Security", "config/bootstrap.ts:84"],
-                    ["Medium", "Performance", "review/engine.ts:211"],
-                    ["High", "Maintainability", "useReviewState.ts:43"],
-                  ].map(([severity, tag, file]) => (
-                    <div
-                      key={file}
-                      className="rounded-2xl border border-white/[0.06] bg-[#0b131d] p-4"
-                    >
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span
-                          className={`rounded-full px-2.5 py-1 font-semibold ${
-                            severity === "Critical"
-                              ? "bg-rose-400/15 text-rose-200"
-                              : severity === "High"
-                              ? "bg-amber-400/15 text-amber-200"
-                              : "bg-cyan-300/15 text-cyan-200"
-                          }`}
-                        >
-                          {severity}
-                        </span>
-                        <span className="rounded-full border border-white/[0.06] px-2.5 py-1 text-prism-muted">
-                          {tag}
-                        </span>
-                        <span className="font-mono text-prism-muted">{file}</span>
-                      </div>
-                      <p className="mt-3 prism-body text-slate-200">
-                        AI review comment with actionable engineering context,
-                        remediation guidance, and merge-risk reasoning.
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-5 grid gap-4 sm:grid-cols-4">
-                  {[
-                    ["PRs analyzed", "128"],
-                    ["Critical caught", "34"],
-                    ["Time saved", "4.2h"],
-                    ["Confidence", "91%"],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4"
-                    >
-                      <div className="text-xs text-prism-muted">{label}</div>
-                      <div className="mt-2 prism-h3 text-white">
-                        {value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   function ComparisonSection() {
     const rows = [
       ["Understands raw code diffs", "Yes", "Yes"],
@@ -828,7 +677,7 @@ export default function LandingPage() {
       <section id="compare" className="relative prism-section">
         <div className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
           <div className="reveal max-w-2xl">
-            <div className="mb-5 prism-eyebrow text-fuchsia-300">Comparison</div>
+            <div className="mb-5 prism-eyebrow text-2xl text-fuchsia-300">Comparison</div>
             <h2 className="prism-h2 text-white">
               Traditional AI reviewers stop at code. PRISM goes further.
             </h2>
@@ -1067,7 +916,6 @@ export default function LandingPage() {
             <ProblemSection />
             <FeaturesSection />
             <WorkflowSection />
-            <DashboardShowcase />
             <ComparisonSection />
             <FinalCTA />
           </main>
