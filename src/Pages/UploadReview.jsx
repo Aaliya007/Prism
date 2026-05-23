@@ -10,13 +10,55 @@ import {
   X,
 } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 export default function UploadReview() {
   const navigate = useNavigate();
-  const [repoUrl, setRepoUrl] = useState("");
+  const [prUrl, setPrUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [branch, setBranch] = useState("main");
   const [notes, setNotes] = useState("");
   const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+
+  async function handleAnalyze() {
+    const trimmed = prUrl.trim();
+    if (!trimmed) {
+      setError("Please enter a GitHub pull request URL.");
+      return;
+    }
+    if (!/^https?:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+(?:[/?#].*)?$/i.test(trimmed)) {
+      setError(
+        "Please enter a valid GitHub PR URL (e.g. https://github.com/org/repo/pull/123)."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE}/analyze-pr`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prUrl: trimmed }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to analyze PR");
+      }
+
+      localStorage.setItem("prismData", JSON.stringify(data));
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const stats = useMemo(
     () => [
@@ -159,9 +201,11 @@ export default function UploadReview() {
               </button>
               <button
                 type="button"
-                className="rounded-full bg-[linear-gradient(135deg,#e9d5ff_0%,#7dd3fc_40%,#67e8f9_100%)] px-4 py-2 prism-label font-semibold text-slate-950 shadow-[0_12px_34px_rgba(167,139,250,0.25)] transition hover:-translate-y-0.5 hover:brightness-105"
+                onClick={handleAnalyze}
+                disabled={loading}
+                className="rounded-full bg-[linear-gradient(135deg,#e9d5ff_0%,#7dd3fc_40%,#67e8f9_100%)] px-4 py-2 prism-label font-semibold text-slate-950 shadow-[0_12px_34px_rgba(167,139,250,0.25)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Start Review
+                {loading ? "Analyzing..." : "Start Review"}
               </button>
             </div>
           </div>
@@ -264,11 +308,15 @@ export default function UploadReview() {
                       Repository or PR URL
                     </label>
                     <input
-                      value={repoUrl}
-                      onChange={(e) => setRepoUrl(e.target.value)}
-                      placeholder="https://github.com/org/repo or PR link"
-                      className="w-full rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-3 prism-body text-white outline-none placeholder:text-prism-muted focus:border-violet-300/40 focus:ring-2 focus:ring-violet-400/15"
+                      value={prUrl}
+                      onChange={(e) => setPrUrl(e.target.value)}
+                      placeholder="https://github.com/org/repo/pull/123"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-3 prism-body text-white outline-none placeholder:text-prism-muted focus:border-violet-300/40 focus:ring-2 focus:ring-violet-400/15 disabled:opacity-60"
                     />
+                    {error ? (
+                      <p className="mt-2 prism-label text-rose-300">{error}</p>
+                    ) : null}
                   </div>
                   <div>
                     <label className="mb-2 block prism-label font-medium text-slate-200">
@@ -436,9 +484,11 @@ export default function UploadReview() {
                   </button>
                   <button
                     type="button"
-                    className="rounded-xl bg-[linear-gradient(135deg,#e9d5ff_0%,#7dd3fc_42%,#67e8f9_100%)] px-5 py-2.5 prism-label font-semibold text-slate-950 shadow-[0_14px_40px_rgba(167,139,250,0.28)] transition hover:-translate-y-0.5 hover:brightness-105"
+                    onClick={handleAnalyze}
+                    disabled={loading}
+                    className="rounded-xl bg-[linear-gradient(135deg,#e9d5ff_0%,#7dd3fc_42%,#67e8f9_100%)] px-5 py-2.5 prism-label font-semibold text-slate-950 shadow-[0_14px_40px_rgba(167,139,250,0.28)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Run AI Review
+                    {loading ? "Analyzing..." : "Run AI Review"}
                   </button>
                 </div>
               </div>

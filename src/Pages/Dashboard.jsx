@@ -2,111 +2,145 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
+const TIMELINE_TONES = ["accent", "danger", "warn", "success", "accent2"];
+
+const AGENT_STYLES = [
+  {
+    color: "from-rose-500/14 via-rose-400/6 to-transparent",
+    dot: "bg-rose-400",
+    ring: "shadow-[0_0_28px_rgba(251,113,133,0.45)]",
+  },
+  {
+    color: "from-amber-400/14 via-amber-300/6 to-transparent",
+    dot: "bg-amber-300",
+    ring: "shadow-[0_0_28px_rgba(252,211,77,0.35)]",
+  },
+  {
+    color: "from-emerald-400/14 via-emerald-300/6 to-transparent",
+    dot: "bg-emerald-300",
+    ring: "shadow-[0_0_28px_rgba(52,211,153,0.35)]",
+  },
+  {
+    color: "from-cyan-400/14 via-sky-300/6 to-transparent",
+    dot: "bg-cyan-300",
+    ring: "shadow-[0_0_28px_rgba(103,232,249,0.35)]",
+  },
+];
+
+function loadPrismData() {
+  try {
+    const raw = localStorage.getItem("prismData");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function formatMergeConfidence(value) {
+  if (value == null || value === "") return "—";
+  const num = Number(value);
+  if (Number.isNaN(num)) return String(value);
+  if (num <= 10) return `${Math.round(num * 10)}%`;
+  return `${num}%`;
+}
+
+function analysisCompletionPercent(value) {
+  if (value == null || value === "") return 82;
+  const num = Number(value);
+  if (Number.isNaN(num)) return 82;
+  if (num <= 10) return Math.min(100, Math.round(num * 10));
+  return Math.min(100, Math.round(num));
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const timeline = [
-    {
-      time: "09:12",
-      title: "PR #418 ingested",
-      detail: "Feature/auth-middleware · 14 files changed",
-      tone: "accent",
-    },
-    {
-      time: "09:15",
-      title: "Security agent flagged token exposure",
-      detail: "Potential secret in config/bootstrap.ts",
-      tone: "danger",
-    },
-    {
-      time: "09:18",
-      title: "Performance regression predicted",
-      detail: "Bundle size +18% from duplicated utility import",
-      tone: "warn",
-    },
-    {
-      time: "09:23",
-      title: "Maintainability notes drafted",
-      detail: "Cyclomatic complexity increased in review service",
-      tone: "success",
-    },
-    {
-      time: "09:26",
-      title: "Contributor risk normalized",
-      detail: "Author history stable · reviewer load balanced",
-      tone: "accent2",
-    },
-  ];
+  const data = useMemo(() => loadPrismData(), []);
 
-  const comments = [
-    {
-      severity: "Critical",
-      file: "config/bootstrap.ts",
-      line: 84,
-      tag: "Security",
-      body: "API credential appears to be interpolated into client-visible runtime config. Move the secret to server-only environment access and inject a scoped token instead.",
-    },
-    {
-      severity: "Medium",
-      file: "src/review/engine.ts",
-      line: 211,
-      tag: "Performance",
-      body: "Loop allocates a new parser object for every file chunk. Hoist parser initialization outside the iteration to avoid repeated setup cost under large PRs.",
-    },
-    {
-      severity: "High",
-      file: "src/hooks/useReviewState.ts",
-      line: 43,
-      tag: "Maintainability",
-      body: "Multiple state transitions are spread across effects. Consolidate to a reducer to make failure paths easier to test and reason about.",
-    },
-  ];
+  const comments = data?.reviewComments ?? [];
 
-  const agents = [
-    {
-      name: "Security Agent",
-      score: "3 findings",
-      sub: "Secrets, auth, unsafe access",
-      color: "from-rose-500/14 via-rose-400/6 to-transparent",
-      dot: "bg-rose-400",
-      ring: "shadow-[0_0_28px_rgba(251,113,133,0.45)]",
-    },
-    {
-      name: "Performance Agent",
-      score: "2 hotspots",
-      sub: "Render, memory, bundle drift",
-      color: "from-amber-400/14 via-amber-300/6 to-transparent",
-      dot: "bg-amber-300",
-      ring: "shadow-[0_0_28px_rgba(252,211,77,0.35)]",
-    },
-    {
-      name: "Maintainability Agent",
-      score: "6 notes",
-      sub: "Complexity, naming, coupling",
-      color: "from-emerald-400/14 via-emerald-300/6 to-transparent",
-      dot: "bg-emerald-300",
-      ring: "shadow-[0_0_28px_rgba(52,211,153,0.35)]",
-    },
-    {
-      name: "Human Risk Agent",
-      score: "Low risk",
-      sub: "Ownership, review load, context",
-      color: "from-cyan-400/14 via-sky-300/6 to-transparent",
-      dot: "bg-cyan-300",
-      ring: "shadow-[0_0_28px_rgba(103,232,249,0.35)]",
-    },
-  ];
+  const timeline = useMemo(() => {
+    const items = data?.timeline ?? [];
+    return items.map((item, index) => ({
+      time: item?.time ?? "—",
+      title: item?.title ?? "Event",
+      detail: item?.detail ?? "",
+      tone: item?.tone ?? TIMELINE_TONES[index % TIMELINE_TONES.length],
+    }));
+  }, [data]);
+
+  const agents = useMemo(() => {
+    const items = data?.aiAgents ?? [];
+    return items.map((agent, index) => {
+      const style = AGENT_STYLES[index % AGENT_STYLES.length];
+      const findings = agent?.findings ?? 0;
+      return {
+        name: agent?.name ?? "AI Agent",
+        score: `${findings} finding${findings === 1 ? "" : "s"}`,
+        sub: agent?.status ?? "Active",
+        ...style,
+      };
+    });
+  }, [data]);
+
+  const findingsCount = useMemo(() => {
+    if (comments.length > 0) return comments.length;
+    return (data?.aiAgents ?? []).reduce(
+      (sum, agent) => sum + (Number(agent?.findings) || 0),
+      0
+    );
+  }, [data, comments.length]);
+
+  const criticalCount = useMemo(
+    () =>
+      comments.filter((c) => String(c?.severity).toLowerCase() === "critical")
+        .length,
+    [comments]
+  );
+
+  const mergeConfidenceLabel = formatMergeConfidence(data?.mergeConfidence);
+  const analysisPercent = analysisCompletionPercent(data?.mergeConfidence);
 
   const metrics = useMemo(
     () => [
-      { label: "PRs analyzed", value: "128", delta: "+12%" },
-      { label: "Critical issues caught", value: "34", delta: "+8%" },
-      { label: "Median review time saved", value: "4.2h", delta: "-19%" },
-      { label: "Merge confidence", value: "91%", delta: "+6%" },
+      {
+        label: "Changed files",
+        value: data?.changedFiles != null ? String(data.changedFiles) : "—",
+        delta: data?.additions != null ? `+${data.additions}` : "—",
+      },
+      {
+        label: "Critical issues caught",
+        value: data ? String(criticalCount) : "—",
+        delta: data ? `${comments.length} total` : "—",
+      },
+      {
+        label: "Additions / deletions",
+        value:
+          data?.additions != null && data?.deletions != null
+            ? `+${data.additions} / -${data.deletions}`
+            : "—",
+        delta: data?.repoName ?? "—",
+      },
+      {
+        label: "Merge confidence",
+        value: mergeConfidenceLabel,
+        delta: data?.overallRisk ?? "—",
+      },
     ],
-    []
+    [data, criticalCount, comments.length, mergeConfidenceLabel]
   );
+
+  const prLabel = data?.prNumber
+    ? `PR #${data.prNumber}`
+    : "PR #—";
+  const branchLabel = data?.branch ?? "—";
+  const repoLabel = data?.repoName ?? "—";
+  const prTitle = data?.prTitle ?? "No pull request loaded";
+  const summaryText =
+    data?.summary ??
+    "Paste a GitHub PR URL on the upload page to run an AI review and populate this dashboard.";
 
   function Logo({ compact = false }) {
     return (
@@ -249,6 +283,30 @@ export default function Dashboard() {
     );
   }
 
+  function EmptyState() {
+    return (
+      <section className="prism-panel p-8 text-center md:p-12">
+        <div className="mx-auto max-w-lg">
+          <div className="mb-3 prism-eyebrow text-cyan-200 normal-case tracking-normal">
+            No analysis loaded
+          </div>
+          <h2 className="prism-h2 text-white">Run your first PR review</h2>
+          <p className="mt-4 prism-body-lg text-prism-muted">
+            Upload a GitHub pull request URL to analyze risk, review comments,
+            and agent insights. Results will appear here automatically.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/upload-review")}
+            className="mt-8 rounded-xl bg-white px-6 py-3 prism-label font-semibold text-slate-950 shadow-[0_14px_32px_rgba(255,255,255,0.14)] transition hover:-translate-y-0.5"
+          >
+            Upload Review
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   function Hero() {
     return (
       <section className="prism-panel relative overflow-hidden p-6 md:p-8">
@@ -265,14 +323,31 @@ export default function Dashboard() {
             </div>
 
             <h1 className="prism-h1 max-w-xl text-white">
-              Merge faster with AI reviews your team can actually trust.
+              {data ? prTitle : "Merge faster with AI reviews your team can actually trust."}
             </h1>
 
             <p className="mt-4 max-w-xl prism-body-lg text-prism-muted">
-              Prism analyzes code quality, engineering risk, and contributor
-              behavior before merge, then drafts high-signal review comments for
-              every pull request.
+              {summaryText}
             </p>
+
+            {data?.author ? (
+              <div className="mt-4 flex items-center gap-3">
+                {data.authorAvatar ? (
+                  <img
+                    src={data.authorAvatar}
+                    alt={data.author}
+                    className="h-9 w-9 rounded-full border border-white/[0.1]"
+                  />
+                ) : null}
+                <div className="prism-label text-slate-200">
+                  <span className="text-prism-muted">Author </span>
+                  {data.author}
+                  {repoLabel !== "—" ? (
+                    <span className="text-prism-muted"> · {repoLabel}</span>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-6 flex flex-wrap gap-3">
               <button
@@ -296,7 +371,7 @@ export default function Dashboard() {
               <div>
                 <div className="prism-h3 text-white">Review orchestration</div>
                 <div className="prism-label text-prism-muted">
-                  PR #418 · feature/auth-middleware
+                  {prLabel} · {branchLabel}
                 </div>
               </div>
               <div className="rounded-full border border-cyan-300/15 bg-cyan-300/10 px-3 py-1 prism-eyebrow text-cyan-100 normal-case tracking-normal">
@@ -308,19 +383,22 @@ export default function Dashboard() {
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
                 <div className="mb-2 flex items-center justify-between prism-label">
                   <span className="text-prism-muted">Analysis completion</span>
-                  <span className="font-semibold text-white">82%</span>
+                  <span className="font-semibold text-white">{analysisPercent}%</span>
                 </div>
                 <div className="relative h-2 overflow-hidden rounded-full bg-white/[0.08]">
-                  <div className="h-full w-[82%] rounded-full bg-[linear-gradient(90deg,#67e8f9_0%,#38bdf8_50%,#93c5fd_100%)] shadow-[0_0_24px_rgba(56,189,248,0.32)]" />
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,#67e8f9_0%,#38bdf8_50%,#93c5fd_100%)] shadow-[0_0_24px_rgba(56,189,248,0.32)]"
+                    style={{ width: `${analysisPercent}%` }}
+                  />
                   <div className="absolute inset-y-0 w-20 animate-scan bg-gradient-to-r from-transparent via-white/30 to-transparent" />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  ["Files", "14"],
-                  ["Findings", "11"],
-                  ["Risk", "Elevated"],
+                  ["Files", data?.changedFiles != null ? String(data.changedFiles) : "—"],
+                  ["Findings", String(findingsCount)],
+                  ["Risk", data?.overallRisk ?? "—"],
                 ].map(([label, value]) => (
                   <div
                     key={label}
@@ -368,9 +446,14 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-4">
+          {timeline.length === 0 ? (
+            <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] px-4 py-6 text-center prism-body text-prism-muted">
+              No timeline events yet. Run a PR analysis to populate activity.
+            </div>
+          ) : null}
           {timeline.map((item, index) => (
             <div
-              key={item.time}
+              key={`${item.time}-${item.title}-${index}`}
               className="grid grid-cols-[56px_14px_1fr] items-start gap-3"
             >
               <div className="pt-0.5 font-mono text-xs text-prism-muted tabular-nums">
@@ -404,7 +487,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1 prism-eyebrow text-emerald-200 normal-case tracking-normal">
-            3 comments ready
+            {comments.length} comment{comments.length === 1 ? "" : "s"} ready
           </div>
         </div>
 
@@ -420,31 +503,39 @@ export default function Dashboard() {
           </div>
 
           <div className="grid gap-4 p-4">
-            {comments.map((comment) => (
+            {comments.length === 0 ? (
+              <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] px-4 py-6 text-center prism-body text-prism-muted">
+                No review comments yet. Analyze a pull request to generate
+                suggestions.
+              </div>
+            ) : null}
+            {comments.map((comment, index) => (
               <div
-                key={`${comment.file}-${comment.line}`}
+                key={`${comment?.file ?? "file"}-${comment?.line ?? index}-${index}`}
                 className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-4"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`rounded-full px-2.5 py-1 prism-eyebrow normal-case tracking-normal ${
-                      comment.severity === "Critical"
+                      comment?.severity === "Critical"
                         ? "bg-rose-400/15 text-rose-200"
-                        : comment.severity === "High"
+                        : comment?.severity === "High"
                           ? "bg-amber-400/15 text-amber-200"
                           : "bg-cyan-300/15 text-cyan-200"
                     }`}
                   >
-                    {comment.severity}
+                    {comment?.severity ?? "Note"}
                   </span>
                   <span className="rounded-full border border-white/[0.1] px-2.5 py-1 prism-label text-prism-muted">
-                    {comment.tag}
+                    {comment?.tag ?? "Review"}
                   </span>
                   <span className="font-mono text-xs text-prism-muted">
-                    {comment.file}:{comment.line}
+                    {comment?.file ?? "unknown"}:{comment?.line ?? "—"}
                   </span>
                 </div>
-                <p className="mt-3 prism-body text-slate-200">{comment.body}</p>
+                <p className="mt-3 prism-body text-slate-200">
+                  {comment?.body ?? "No comment body provided."}
+                </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -479,11 +570,16 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2 prism-label text-prism-muted">
             <span className="h-2.5 w-2.5 animate-pulseSoft rounded-full bg-emerald-400" />
-            4 agents active
+            {agents.length} agent{agents.length === 1 ? "" : "s"} active
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {agents.length === 0 ? (
+            <div className="col-span-full rounded-xl border border-white/[0.1] bg-white/[0.03] px-4 py-6 text-center prism-body text-prism-muted">
+              No agent activity yet. Run a PR analysis to activate AI reviewers.
+            </div>
+          ) : null}
           {agents.map((agent) => (
             <div
               key={agent.name}
@@ -531,6 +627,7 @@ export default function Dashboard() {
 
           <main className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-7 px-4 py-6 md:gap-8 md:px-6 md:py-8">
+              {!data ? <EmptyState /> : null}
               <Hero />
 
               <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
