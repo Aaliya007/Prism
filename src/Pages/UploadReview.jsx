@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -9,8 +9,8 @@ import {
   FileCode2,
   X,
 } from "lucide-react";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+import IntegrationStatus from "../components/IntegrationStatus.jsx";
+import { API_BASE, fetchIntegrationStatus } from "../lib/api.js";
 
 export default function UploadReview() {
   const navigate = useNavigate();
@@ -21,6 +21,33 @@ export default function UploadReview() {
   const [notes, setNotes] = useState("");
   const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [integrationStatus, setIntegrationStatus] = useState(null);
+  const [integrationLoading, setIntegrationLoading] = useState(true);
+  const [integrationError, setIntegrationError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadIntegrations() {
+      setIntegrationLoading(true);
+      setIntegrationError("");
+      try {
+        const status = await fetchIntegrationStatus();
+        if (!cancelled) setIntegrationStatus(status);
+      } catch (err) {
+        if (!cancelled) {
+          setIntegrationError(err.message || "Could not reach the backend.");
+        }
+      } finally {
+        if (!cancelled) setIntegrationLoading(false);
+      }
+    }
+
+    loadIntegrations();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleAnalyze() {
     const trimmed = prUrl.trim();
@@ -35,6 +62,13 @@ export default function UploadReview() {
       return;
     }
 
+    if (!integrationStatus?.gemini?.configured) {
+      setError(
+        "Gemini API key is not loaded on the server. Add GEMINI_API_KEY to backend/.env and restart the backend."
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -42,7 +76,12 @@ export default function UploadReview() {
       const response = await fetch(`${API_BASE}/analyze-pr`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prUrl: trimmed }),
+        body: JSON.stringify({
+          prUrl: trimmed,
+          branch: branch.trim() || undefined,
+          reviewerNotes: notes.trim() || undefined,
+          uploadedFileNames: files.map((f) => f.name),
+        }),
       });
 
       const data = await response.json();
@@ -287,6 +326,12 @@ export default function UploadReview() {
                 </div>
               </div>
             </section>
+
+            <IntegrationStatus
+              status={integrationStatus}
+              loading={integrationLoading}
+              error={integrationError}
+            />
 
             <section className="grid gap-7 xl:grid-cols-2">
               <div className="prism-panel p-6 md:p-7">

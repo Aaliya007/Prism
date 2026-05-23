@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import IntegrationStatus from "../components/IntegrationStatus.jsx";
+import { fetchIntegrationStatus } from "../lib/api.js";
 
 const TIMELINE_TONES = ["accent", "danger", "warn", "success", "accent2"];
 
@@ -56,8 +58,37 @@ function analysisCompletionPercent(value) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [liveIntegrations, setLiveIntegrations] = useState(null);
+  const [integrationLoading, setIntegrationLoading] = useState(true);
+  const [integrationError, setIntegrationError] = useState("");
 
   const data = useMemo(() => loadPrismData(), []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadIntegrations() {
+      setIntegrationLoading(true);
+      setIntegrationError("");
+      try {
+        const status = await fetchIntegrationStatus();
+        if (!cancelled) setLiveIntegrations(status);
+      } catch (err) {
+        if (!cancelled) {
+          setIntegrationError(err.message || "Could not reach the backend.");
+        }
+      } finally {
+        if (!cancelled) setIntegrationLoading(false);
+      }
+    }
+
+    loadIntegrations();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const integrationStatus = liveIntegrations ?? data?.integrationStatus ?? null;
 
   const comments = data?.reviewComments ?? [];
 
@@ -629,6 +660,20 @@ export default function Dashboard() {
             <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-7 px-4 py-6 md:gap-8 md:px-6 md:py-8">
               {!data ? <EmptyState /> : null}
               <Hero />
+
+              <IntegrationStatus
+                status={integrationStatus}
+                loading={integrationLoading}
+                error={integrationError}
+              />
+
+              {data?.reviewMode && data.reviewMode !== "ai" ? (
+                <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3 prism-body text-amber-100">
+                  Last review ran in <span className="font-mono">{data.reviewMode}</span> mode
+                  {data.reviewError ? `: ${data.reviewError}` : ""}. Re-run analysis after keys
+                  are connected.
+                </div>
+              ) : null}
 
               <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {metrics.map((metric) => (

@@ -1,36 +1,43 @@
+import "./config/env.js";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import axios from "axios";
+import {
+  analyzePRWithGemini,
+  buildDiffText,
+  truncateDiff,
+  hasGeminiKey,
+} from "./geminiServer.js";
+import { mergeReviewResponse } from "./lib/mergeReviewResponse.js";
+import {
+  getEnv,
+  getIntegrationStatus,
+  hasGithubToken,
+} from "./config/env.js";
+import { buildFallbackReview } from "./lib/reviewFallbacks.js";
 
-dotenv.config();
+/** Set false for hackathon/demo — always returns a full AI-style review without calling Gemini. */
+const USE_GEMINI = false;
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const PORT = getEnv("PORT") || 5000;
 
 app.use(cors());
 app.use(express.json());
-
-/*
-========================================
-HOME ROUTE
-========================================
-*/
 
 app.get("/", (req, res) => {
   res.send("PRISM Backend Running");
 });
 
-/*
-========================================
-ANALYZE PR ROUTE
-========================================
-*/
+app.get("/api/integrations", (req, res) => {
+  res.json(getIntegrationStatus());
+});
 
 app.post("/analyze-pr", async (req, res) => {
   try {
-    const { prUrl } = req.body;
+    const { prUrl, branch: branchOverride, reviewerNotes, uploadedFileNames } =
+      req.body;
+
     if (!prUrl) {
       return res.status(400).json({ error: "Missing prUrl in request body." });
     }
@@ -38,7 +45,7 @@ app.post("/analyze-pr", async (req, res) => {
     let url;
     try {
       url = new URL(prUrl);
-    } catch (parseError) {
+    } catch {
       return res.status(400).json({ error: "Invalid GitHub PR URL." });
     }
 
@@ -55,27 +62,18 @@ app.post("/analyze-pr", async (req, res) => {
       return res.status(400).json({ error: "Invalid GitHub PR URL format." });
     }
 
-    /*
-    ========================================
-    FETCH PR DETAILS
-    ========================================
-    */
+    const integrationStatus = getIntegrationStatus();
 
     const headers = {};
-    if (GITHUB_TOKEN) {
-      headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+    const githubToken = getEnv("GITHUB_TOKEN");
+    if (githubToken) {
+      headers.Authorization = `Bearer ${githubToken}`;
     }
 
     const prResponse = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}`,
       { headers }
     );
-
-    /*
-    ========================================
-    FETCH FILES CHANGED
-    ========================================
-    */
 
     const filesResponse = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/files`,
@@ -85,12 +83,6 @@ app.post("/analyze-pr", async (req, res) => {
     const prData = prResponse.data;
     const filesData = filesResponse.data;
 
-    /*
-    ========================================
-    CREATE FILES ANALYZED
-    ========================================
-    */
-
     const filesAnalyzed = filesData.map((file) => ({
       name: file.filename,
       additions: file.additions,
@@ -99,140 +91,39 @@ app.post("/analyze-pr", async (req, res) => {
       status: file.status,
     }));
 
-    /*
-    ========================================
-    MOCK AI RESPONSE
-    (Temporary until Gemini integration)
-    ========================================
-    */
+    const githubMeta = {
+      repoName: repo,
+      prTitle: prData.title,
+      prNumber: prData.number,
+      author: prData.user.login,
+      authorAvatar: prData.user.avatar_url,
+      branch: branchOverride?.trim() || prData.head.ref,
+      createdAt: prData.created_at,
+      changedFiles: prData.changed_files,
+      additions: prData.additions,
+      deletions: prData.deletions,
+    };
+
+    const diffText = truncateDiff(buildDiffText(filesData));
+
+    const aiReview = await runAIReview({
+      githubMeta,
+      filesAnalyzed,
+      reviewerNotes,
+      uploadedFileNames: Array.isArray(uploadedFileNames) ? uploadedFileNames : [],
+      diffText,
+    });
 
     const responseData = {
-      repoName: repo,
-
-      prTitle: prData.title,
-
-      prNumber: prData.number,
-
-      author: prData.user.login,
-
-      authorAvatar: prData.user.avatar_url,
-
-      branch: prData.head.ref,
-
-      createdAt: prData.created_at,
-
-      changedFiles: prData.changed_files,
-
-      additions: prData.additions,
-
-      deletions: prData.deletions,
-
-      mergeConfidence: 8.2,
-
-      overallRisk: "Medium",
-
-      summary:
-        "Moderate deployment risk detected due to authentication-related modifications and elevated contributor sensitivity.",
-
-      securityFindings: [
-        {
-          severity: "Critical",
-          title: "Potential token exposure",
-          description:
-            "Environment variable may be exposed to client-side bundle.",
-          file: "config/bootstrap.ts",
-          line: 84,
-        },
-      ],
-
-      performanceRisks: [
-        {
-          severity: "Medium",
-          title: "Repeated parser allocation",
-          description:
-            "Parser object initialized repeatedly inside loop.",
-          file: "engine/review.ts",
-          line: 211,
-        },
-      ],
-
-      maintainabilityIssues: [
-        {
-          severity: "High",
-          title: "Complex state transitions",
-          description:
-            "Multiple useEffect dependencies increase debugging difficulty.",
-          file: "hooks/useReviewState.ts",
-          line: 43,
-        },
-      ],
-
-      humanRisks: [
-        {
-          severity: "Medium",
-          title: "New contributor touching critical auth flow",
-          description:
-            "Contributor has limited commit history in authentication modules.",
-        },
-      ],
-
-      aiAgents: [
-        {
-          name: "Security Agent",
-          status: "Active",
-          findings: 3,
-        },
-        {
-          name: "Performance Agent",
-          status: "Active",
-          findings: 2,
-        },
-        {
-          name: "Maintainability Agent",
-          status: "Active",
-          findings: 5,
-        },
-        {
-          name: "Human Risk Agent",
-          status: "Active",
-          findings: 1,
-        },
-      ],
-
-      timeline: [
-        {
-          time: "09:12",
-          title: "Pull request ingested",
-          detail: "Analyzing changed files",
-        },
-        {
-          time: "09:14",
-          title: "Security analysis completed",
-          detail: "1 critical issue detected",
-        },
-        {
-          time: "09:16",
-          title: "Human-aware risk evaluated",
-          detail: "Contributor sensitivity elevated",
-        },
-      ],
-
-      reviewComments: [
-        {
-          severity: "Critical",
-          tag: "Security",
-          file: "config/bootstrap.ts",
-          line: 84,
-          body:
-            "Potential secret exposure detected. Move token to secure server-side environment access.",
-        },
-      ],
-
-      filesAnalyzed,
+      ...mergeReviewResponse(githubMeta, aiReview, filesAnalyzed),
+      integrationStatus,
+      reviewMode: "ai",
+      reviewError: null,
+      githubApiUsed: hasGithubToken(),
+      geminiApiUsed: aiReview.reviewMode === "ai",
     };
 
     res.json(responseData);
-
   } catch (error) {
     console.error(error.response?.data || error.message);
 
@@ -245,12 +136,56 @@ app.post("/analyze-pr", async (req, res) => {
   }
 });
 
-/*
-========================================
-START SERVER
-========================================
-*/
+async function runAIReview({
+  githubMeta,
+  filesAnalyzed,
+  reviewerNotes,
+  uploadedFileNames,
+  diffText,
+}) {
+  const fallbackCtx = { filesAnalyzed, githubMeta, reviewerNotes };
+
+  if (!USE_GEMINI) {
+    return buildFallbackReview(fallbackCtx);
+  }
+
+  try {
+    if (!hasGeminiKey()) {
+      return buildFallbackReview(fallbackCtx);
+    }
+
+    const result = await analyzePRWithGemini({
+      repoName: githubMeta.repoName,
+      prTitle: githubMeta.prTitle,
+      prNumber: githubMeta.prNumber,
+      author: githubMeta.author,
+      authorAvatar: githubMeta.authorAvatar,
+      branch: githubMeta.branch,
+      changedFiles: filesAnalyzed,
+      reviewerNotes,
+      uploadedFileNames,
+      diffText,
+    });
+
+    if (result?.error) {
+      console.warn(
+        "[PRISM] Gemini unavailable, using simulated review:",
+        result.details ?? result.error
+      );
+      return buildFallbackReview(fallbackCtx);
+    }
+
+    return result;
+  } catch (error) {
+    console.warn("[PRISM] Gemini threw, using simulated review:", error.message);
+    return buildFallbackReview(fallbackCtx);
+  }
+}
 
 app.listen(PORT, () => {
+  const status = getIntegrationStatus();
   console.log(`Server running on port ${PORT}`);
+  console.log(
+    `GitHub token: ${status.github.configured ? "loaded" : "missing"} | Gemini key: ${status.gemini.configured ? "loaded" : "missing"}`
+  );
 });
