@@ -7,3 +7,11 @@ export async function fetchIntegrationStatus() {
   }
   return response.json();
 }
+
+export async function fetchGithubLiveStatus() {
+  const response = await fetch(`${API_BASE}/github/live-status`);
+  if (!response.ok) {
+    throw new Error("Failed to load GitHub live status");
+  }
+  return response.json();
+}

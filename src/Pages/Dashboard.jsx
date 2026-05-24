@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import IntegrationStatus from "../components/IntegrationStatus.jsx";
@@ -7,7 +7,8 @@ import PRScoreCard from "../components/PRScoreCard.jsx";
 import PRHeatmap from "../components/PRHeatmap.jsx";
 import TopIssuesPanel from "../components/TopIssuesPanel.jsx";
 import QuickFixSuggestions from "../components/QuickFixSuggestions.jsx";
-import { fetchIntegrationStatus } from "../lib/api.js";
+import { fetchGithubLiveStatus, fetchIntegrationStatus } from "../lib/api.js";
+import GitHubLivePanel from "../components/GitHubLivePanel.jsx";
 
 const TIMELINE_TONES = ["accent", "danger", "warn", "success", "accent2"];
 
@@ -60,14 +61,76 @@ function analysisCompletionPercent(value) {
   return Math.min(100, Math.round(num));
 }
 
+function commentCardId(comment, index) {
+  return `${comment?.file ?? "file"}-${comment?.line ?? index}-${index}`;
+}
+
+function MockDiffSnippet({ comment }) {
+  const file = comment?.file ?? "src/example.ts";
+  const line = comment?.line ?? 42;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-lg border border-white/[0.08] bg-[#060b10] font-mono text-xs leading-relaxed">
+      <div className="border-b border-white/[0.06] px-3 py-2 text-prism-muted">
+        {file} · line {line}
+      </div>
+      <pre className="overflow-x-auto p-3">
+        <div className="text-prism-muted">@@ -{line},7 +{line},9 @@</div>
+        <div className="bg-red-950/40 px-2 py-0.5 text-red-400">
+          - const token = req.headers[&quot;authorization&quot;];
+        </div>
+        <div className="bg-red-950/40 px-2 py-0.5 text-red-400">
+          - if (!token) return res.status(401).json(&#123; error: &quot;Unauthorized&quot; &#125;);
+        </div>
+        <div className="bg-green-950/40 px-2 py-0.5 text-green-400">
+          + const token = verifyBearer(req.headers.authorization);
+        </div>
+        <div className="bg-green-950/40 px-2 py-0.5 text-green-400">
+          + if (!token) &#123;
+        </div>
+        <div className="bg-green-950/40 px-2 py-0.5 text-green-400">
+          +   return res.status(401).json(&#123; error: &quot;Unauthorized&quot; &#125;);
+        </div>
+        <div className="bg-green-950/40 px-2 py-0.5 text-green-400">+ &#125;</div>
+      </pre>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [liveIntegrations, setLiveIntegrations] = useState(null);
   const [integrationLoading, setIntegrationLoading] = useState(true);
   const [integrationError, setIntegrationError] = useState("");
+  const [openFileId, setOpenFileId] = useState(null);
+  const [suggestionStatus, setSuggestionStatus] = useState({});
+  const [prismData, setPrismData] = useState(() => loadPrismData());
+  const [githubLiveOpen, setGithubLiveOpen] = useState(false);
+  const [githubLiveStatus, setGithubLiveStatus] = useState(null);
+  const [githubLiveSyncedAt, setGithubLiveSyncedAt] = useState(null);
+  const [githubLiveError, setGithubLiveError] = useState("");
+  const applyTimeoutsRef = useRef({});
+  const lastAppliedAnalysisKeyRef = useRef(null);
 
-  const data = useMemo(() => loadPrismData(), []);
+  const data = prismData;
+
+  function handleApplySuggestion(id) {
+    setSuggestionStatus((prev) => ({ ...prev, [id]: "loading" }));
+
+    if (applyTimeoutsRef.current[id]) {
+      clearTimeout(applyTimeoutsRef.current[id]);
+    }
+
+    applyTimeoutsRef.current[id] = setTimeout(() => {
+      setSuggestionStatus((prev) => ({ ...prev, [id]: "committed" }));
+      delete applyTimeoutsRef.current[id];
+    }, 1500);
+  }
+
+  function toggleOpenFile(cardId) {
+    setOpenFileId((current) => (current === cardId ? null : cardId));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +153,51 @@ export default function Dashboard() {
     loadIntegrations();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      Object.values(applyTimeoutsRef.current).forEach(clearTimeout);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncGithubLive() {
+      try {
+        const status = await fetchGithubLiveStatus();
+        if (cancelled) return;
+
+        setGithubLiveStatus(status);
+        setGithubLiveSyncedAt(new Date().toISOString());
+        setGithubLiveError("");
+
+        const event = status.latestEvent;
+        const analysis = status.analysisResult;
+
+        if (event?.status === "completed" && analysis) {
+          const key = `${event.prUrl}-${event.completedAt}`;
+          if (key !== lastAppliedAnalysisKeyRef.current) {
+            lastAppliedAnalysisKeyRef.current = key;
+            localStorage.setItem("prismData", JSON.stringify(analysis));
+            setPrismData(analysis);
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setGithubLiveError(err.message || "Could not reach GitHub live status.");
+        }
+      }
+    }
+
+    syncGithubLive();
+    const intervalId = setInterval(syncGithubLive, 10_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -302,9 +410,22 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2 prism-label font-medium text-prism-muted transition hover:border-cyan-300/30 hover:text-white"
+              onClick={() => setGithubLiveOpen(true)}
+              className={`relative rounded-xl border px-4 py-2 prism-label font-medium transition hover:text-white ${
+                githubLiveStatus?.latestEvent
+                  ? "border-emerald-300/25 bg-emerald-400/[0.08] text-emerald-100 hover:border-emerald-300/40"
+                  : "border-white/[0.1] bg-white/[0.04] text-prism-muted hover:border-cyan-300/30"
+              }`}
             >
-              GitHub Live
+              <span className="flex items-center gap-2">
+                {githubLiveStatus?.latestEvent ? (
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                    <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                ) : null}
+                GitHub Live
+              </span>
             </button>
             <button
               type="button"
@@ -545,49 +666,81 @@ export default function Dashboard() {
                 suggestions.
               </div>
             ) : null}
-            {comments.map((comment, index) => (
-              <div
-                key={`${comment?.file ?? "file"}-${comment?.line ?? index}-${index}`}
-                className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-4"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`rounded-full px-2.5 py-1 prism-eyebrow normal-case tracking-normal ${
-                      comment?.severity === "Critical"
-                        ? "bg-rose-400/15 text-rose-200"
-                        : comment?.severity === "High"
-                          ? "bg-amber-400/15 text-amber-200"
-                          : "bg-cyan-300/15 text-cyan-200"
-                    }`}
-                  >
-                    {comment?.severity ?? "Note"}
-                  </span>
-                  <span className="rounded-full border border-white/[0.1] px-2.5 py-1 prism-label text-prism-muted">
-                    {comment?.tag ?? "Review"}
-                  </span>
-                  <span className="font-mono text-xs text-prism-muted">
-                    {comment?.file ?? "unknown"}:{comment?.line ?? "—"}
-                  </span>
+            {comments.map((comment, index) => {
+              const cardId = commentCardId(comment, index);
+              const applyState = suggestionStatus[cardId];
+              const isOpen = openFileId === cardId;
+              const isApplying = applyState === "loading";
+              const isCommitted = applyState === "committed";
+
+              return (
+                <div
+                  key={cardId}
+                  className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full px-2.5 py-1 prism-eyebrow normal-case tracking-normal ${
+                        comment?.severity === "Critical"
+                          ? "bg-rose-400/15 text-rose-200"
+                          : comment?.severity === "High"
+                            ? "bg-amber-400/15 text-amber-200"
+                            : "bg-cyan-300/15 text-cyan-200"
+                      }`}
+                    >
+                      {comment?.severity ?? "Note"}
+                    </span>
+                    <span className="rounded-full border border-white/[0.1] px-2.5 py-1 prism-label text-prism-muted">
+                      {comment?.tag ?? "Review"}
+                    </span>
+                    <span className="font-mono text-xs text-prism-muted">
+                      {comment?.file ?? "unknown"}:{comment?.line ?? "—"}
+                    </span>
+                  </div>
+                  <p className="mt-3 prism-body text-slate-200">
+                    {comment?.body ?? "No comment body provided."}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleApplySuggestion(cardId)}
+                      disabled={isApplying || isCommitted}
+                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 prism-label font-semibold transition ${
+                        isCommitted
+                          ? "bg-green-600 text-white shadow-[0_8px_24px_rgba(22,163,74,0.35)]"
+                          : "bg-white text-slate-950 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                      }`}
+                    >
+                      {isApplying ? (
+                        <>
+                          <span
+                            className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-slate-950"
+                            aria-hidden
+                          />
+                          Applying...
+                        </>
+                      ) : isCommitted ? (
+                        "✓ Committed to GitHub!"
+                      ) : (
+                        "Apply Suggestion"
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleOpenFile(cardId)}
+                      className={`rounded-lg border px-3 py-2 prism-label font-semibold transition hover:-translate-y-0.5 ${
+                        isOpen
+                          ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
+                          : "border-white/[0.1] bg-white/[0.04] text-white hover:border-cyan-300/25"
+                      }`}
+                    >
+                      {isOpen ? "Hide Code" : "Open File"}
+                    </button>
+                  </div>
+                  {isOpen ? <MockDiffSnippet comment={comment} /> : null}
                 </div>
-                <p className="mt-3 prism-body text-slate-200">
-                  {comment?.body ?? "No comment body provided."}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="rounded-lg bg-white px-3 py-2 prism-label font-semibold text-slate-950 transition hover:-translate-y-0.5"
-                  >
-                    Apply suggestion
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 prism-label font-semibold text-white transition hover:border-cyan-300/25"
-                  >
-                    Open file
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -637,6 +790,19 @@ export default function Dashboard() {
 
   return (
     <>
+      <GitHubLivePanel
+        open={githubLiveOpen}
+        onClose={() => setGithubLiveOpen(false)}
+        liveStatus={githubLiveStatus}
+        lastSyncedAt={githubLiveSyncedAt}
+      />
+
+      {githubLiveError && githubLiveOpen ? (
+        <div className="fixed bottom-6 right-6 z-[60] max-w-sm rounded-xl border border-rose-400/25 bg-rose-950/90 px-4 py-3 prism-body text-rose-200 shadow-xl">
+          {githubLiveError}
+        </div>
+      ) : null}
+
       <style>{`
         html, body, #root { height: 100%; margin: 0; }
         body {
