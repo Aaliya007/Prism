@@ -10,8 +10,60 @@ import {
   X,
 } from "lucide-react";
 import IntegrationStatus from "../components/IntegrationStatus.jsx";
-import { API_BASE, apiUrl, fetchIntegrationStatus } from "../lib/api.js";
+import { apiUrl, fetchIntegrationStatus } from "../lib/api.js";
 import { normalizeIntegrations } from "../lib/integrations.js";
+
+function Logo() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-fuchsia-400/15 blur-xl" />
+        <svg
+          viewBox="0 0 64 64"
+          aria-label="Prism logo"
+          className="relative h-9 w-9 text-prism-accent drop-shadow-[0_0_18px_rgba(109,230,255,0.18)]"
+        >
+          <defs>
+            <linearGradient id="prismGlowUpload" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#79e6ff" />
+              <stop offset="55%" stopColor="#38bdf8" />
+              <stop offset="100%" stopColor="#c084fc" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M16 18 30 10l18 10v24L34 54 16 44Z"
+            fill="none"
+            stroke="url(#prismGlowUpload)"
+            strokeWidth="3.5"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M30 10v24L16 44"
+            fill="none"
+            stroke="url(#prismGlowUpload)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M30 34 48 20"
+            fill="none"
+            stroke="url(#prismGlowUpload)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+      <div>
+        <div className="prism-label font-semibold tracking-[0.1em] text-white uppercase">
+          Prism
+        </div>
+        <div className="prism-eyebrow text-prism-muted normal-case tracking-[0.08em]">
+          Review intake
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function UploadReview() {
   const navigate = useNavigate();
@@ -164,58 +216,6 @@ export default function UploadReview() {
     e.preventDefault();
     setDragActive(false);
     handleFiles(e.dataTransfer.files);
-  }
-
-  function Logo() {
-    return (
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-fuchsia-400/15 blur-xl" />
-          <svg
-            viewBox="0 0 64 64"
-            aria-label="Prism logo"
-            className="relative h-9 w-9 text-prism-accent drop-shadow-[0_0_18px_rgba(109,230,255,0.18)]"
-          >
-            <defs>
-              <linearGradient id="prismGlowUpload" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#79e6ff" />
-                <stop offset="55%" stopColor="#38bdf8" />
-                <stop offset="100%" stopColor="#c084fc" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M16 18 30 10l18 10v24L34 54 16 44Z"
-              fill="none"
-              stroke="url(#prismGlowUpload)"
-              strokeWidth="3.5"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M30 10v24L16 44"
-              fill="none"
-              stroke="url(#prismGlowUpload)"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M30 34 48 20"
-              fill="none"
-              stroke="url(#prismGlowUpload)"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-        <div>
-          <div className="prism-label font-semibold tracking-[0.1em] text-white uppercase">
-            Prism
-          </div>
-          <div className="prism-eyebrow text-prism-muted normal-case tracking-[0.08em]">
-            Review intake
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (
