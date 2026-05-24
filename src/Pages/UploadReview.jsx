@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import IntegrationStatus from "../components/IntegrationStatus.jsx";
 import { API_BASE, apiUrl, fetchIntegrationStatus } from "../lib/api.js";
+import { normalizeIntegrations } from "../lib/integrations.js";
 
 export default function UploadReview() {
   const navigate = useNavigate();
@@ -33,7 +34,10 @@ export default function UploadReview() {
       setIntegrationError("");
       try {
         const status = await fetchIntegrationStatus();
-        if (!cancelled) setIntegrationStatus(status);
+        if (!cancelled) {
+          console.log("[PRISM] integrations", status);
+          setIntegrationStatus(normalizeIntegrations(status));
+        }
       } catch (err) {
         if (!cancelled) {
           setIntegrationError(err.message || "Could not reach the backend.");

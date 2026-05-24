@@ -1,14 +1,14 @@
 import { CheckCircle2, XCircle, Plug } from "lucide-react";
 import { DISPLAY_API_BASE } from "../lib/api.js";
+import { normalizeIntegrations } from "../lib/integrations.js";
 
 function IntegrationCard({ integration }) {
-  const connected = integration?.configured;
-  const Icon = connected ? CheckCircle2 : XCircle;
+  const configured = Boolean(integration?.configured);
 
   return (
     <div
       className={`rounded-xl border p-4 ${
-        connected
+        configured
           ? "border-emerald-300/20 bg-emerald-300/[0.06]"
           : "border-rose-300/20 bg-rose-400/[0.06]"
       }`}
@@ -21,31 +21,33 @@ function IntegrationCard({ integration }) {
               {integration?.label ?? "API"}
             </span>
           </div>
-          {integration?.model ? (
+          {configured && integration?.model ? (
             <p className="mt-1 prism-label text-prism-muted">{integration.model}</p>
-          ) : (
+          ) : !configured ? (
             <p className="mt-1 prism-label text-prism-muted">
               Set <span className="font-mono text-slate-300">{integration?.envVar}</span> in{" "}
               <span className="font-mono text-slate-300">backend/.env</span>
             </p>
-          )}
+          ) : null}
         </div>
-        <Icon
-          className={`h-5 w-5 shrink-0 ${connected ? "text-emerald-300" : "text-rose-300"}`}
-        />
+        {configured ? (
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />
+        ) : (
+          <XCircle className="h-5 w-5 shrink-0 text-rose-300" />
+        )}
       </div>
 
       <div className="mt-3">
         <span
           className={`rounded-full px-2.5 py-1 prism-eyebrow normal-case tracking-normal ${
-            connected
+            configured
               ? "bg-emerald-300/15 text-emerald-200"
               : "bg-rose-400/15 text-rose-200"
           }`}
         >
-          {connected ? "Connected" : "Not configured"}
+          {configured ? "CONFIGURED" : "NOT CONFIGURED"}
         </span>
-        {integration?.tier === "free" && connected ? (
+        {integration?.tier === "free" && configured ? (
           <span className="ml-2 rounded-full border border-white/[0.1] px-2.5 py-1 prism-eyebrow text-prism-muted normal-case tracking-normal">
             Free tier
           </span>
@@ -75,16 +77,15 @@ export default function IntegrationStatus({ status, loading, error, compact = fa
     );
   }
 
-  const github = {
-    configured: Boolean(status?.github?.configured),
-    label: "GitHub API",
-    envVar: "GITHUB_TOKEN",
-  };
-  const gemini = {
-    configured: Boolean(status?.gemini?.configured),
-    label: "Gemini API",
-    envVar: "GEMINI_API_KEY",
-  };
+  const integrations = normalizeIntegrations(status);
+
+  if (!integrations) {
+    return (
+      <div className={compact ? "" : "prism-panel p-5"}>
+        <p className="prism-body text-prism-muted">Integration status unavailable.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={compact ? "space-y-3" : "prism-panel p-5 md:p-6"}>
@@ -98,8 +99,8 @@ export default function IntegrationStatus({ status, loading, error, compact = fa
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <IntegrationCard integration={github} />
-        <IntegrationCard integration={gemini} />
+        <IntegrationCard integration={integrations.github} />
+        <IntegrationCard integration={integrations.gemini} />
       </div>
     </div>
   );

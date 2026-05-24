@@ -8,6 +8,7 @@ import PRHeatmap from "../components/PRHeatmap.jsx";
 import TopIssuesPanel from "../components/TopIssuesPanel.jsx";
 import QuickFixSuggestions from "../components/QuickFixSuggestions.jsx";
 import { fetchGithubLiveStatus, fetchIntegrationStatus } from "../lib/api.js";
+import { normalizeIntegrations } from "../lib/integrations.js";
 import GitHubLivePanel from "../components/GitHubLivePanel.jsx";
 
 const TIMELINE_TONES = ["accent", "danger", "warn", "success", "accent2"];
@@ -100,7 +101,7 @@ function MockDiffSnippet({ comment }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [liveIntegrations, setLiveIntegrations] = useState(null);
+  const [integrations, setIntegrations] = useState(null);
   const [integrationLoading, setIntegrationLoading] = useState(true);
   const [integrationError, setIntegrationError] = useState("");
   const [openFileId, setOpenFileId] = useState(null);
@@ -140,7 +141,10 @@ export default function Dashboard() {
       setIntegrationError("");
       try {
         const status = await fetchIntegrationStatus();
-        if (!cancelled) setLiveIntegrations(status);
+        if (!cancelled) {
+          console.log("[PRISM] integrations", status);
+          setIntegrations(normalizeIntegrations(status));
+        }
       } catch (err) {
         if (!cancelled) {
           setIntegrationError(err.message || "Could not reach the backend.");
@@ -201,7 +205,7 @@ export default function Dashboard() {
     };
   }, []);
 
-  const integrationStatus = liveIntegrations ?? data?.integrationStatus ?? null;
+  const integrationStatus = integrations;
 
   const comments = data?.reviewComments ?? [];
 

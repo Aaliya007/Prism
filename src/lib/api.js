@@ -1,6 +1,5 @@
-export const API_BASE = import.meta.env.VITE_API_BASE || "";
-export const DISPLAY_API_BASE =
-  import.meta.env.VITE_API_BASE || window.location.origin;
+export const API_BASE = import.meta.env.VITE_API_BASE;
+export const DISPLAY_API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 
 export function apiUrl(path) {
   const trimmed = String(path || "").trim();
@@ -27,11 +26,14 @@ export async function apiFetch(path, options = {}) {
     throw new Error(errorText || `API request failed: ${response.status}`);
   }
 
-  if (contentType.includes("application/json")) {
-    return response.json();
+  if (!contentType.includes("application/json")) {
+    const bodyText = await response.text();
+    throw new Error(
+      `Expected JSON response from API but got ${contentType}: ${bodyText.slice(0, 200)}`
+    );
   }
 
-  return response.text();
+  return response.json();
 }
 
 export async function fetchIntegrationStatus() {
