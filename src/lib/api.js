@@ -1,17 +1,43 @@
-export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+export const API_BASE = import.meta.env.VITE_API_BASE || "";
+export const DISPLAY_API_BASE =
+  import.meta.env.VITE_API_BASE || window.location.origin;
+
+export function apiUrl(path) {
+  const trimmed = String(path || "").trim();
+
+  if (!trimmed) {
+    throw new Error("Invalid API path");
+  }
+
+  if (API_BASE) {
+    const base = API_BASE.replace(/\/+$/, "");
+    return `${base}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+  }
+
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+}
+
+export async function apiFetch(path, options = {}) {
+  const response = await fetch(apiUrl(path), options);
+
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `API request failed: ${response.status}`);
+  }
+
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  return response.text();
+}
 
 export async function fetchIntegrationStatus() {
-  const response = await fetch(`${API_BASE}/api/integrations`);
-  if (!response.ok) {
-    throw new Error("Failed to load API integration status");
-  }
-  return response.json();
+  return apiFetch("/api/integrations");
 }
 
 export async function fetchGithubLiveStatus() {
-  const response = await fetch(`${API_BASE}/github/live-status`);
-  if (!response.ok) {
-    throw new Error("Failed to load GitHub live status");
-  }
-  return response.json();
+  return apiFetch("/github/live-status");
 }

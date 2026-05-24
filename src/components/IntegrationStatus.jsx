@@ -1,4 +1,5 @@
 import { CheckCircle2, XCircle, Plug } from "lucide-react";
+import { DISPLAY_API_BASE } from "../lib/api.js";
 
 function IntegrationCard({ integration }) {
   const connected = integration?.configured;
@@ -68,14 +69,22 @@ export default function IntegrationStatus({ status, loading, error, compact = fa
       <div className={compact ? "" : "prism-panel p-5"}>
         <p className="prism-body text-rose-300">{error}</p>
         <p className="mt-2 prism-label text-prism-muted">
-          Is the backend running on {import.meta.env.VITE_API_BASE || "http://localhost:5000"}?
+          Is the backend running on {DISPLAY_API_BASE}?
         </p>
       </div>
     );
   }
 
-  const github = status?.github;
-  const gemini = status?.gemini;
+  const github = {
+    configured: Boolean(status?.github?.configured),
+    label: "GitHub API",
+    envVar: "GITHUB_TOKEN",
+  };
+  const gemini = {
+    configured: Boolean(status?.gemini?.configured),
+    label: "Gemini API",
+    envVar: "GEMINI_API_KEY",
+  };
 
   return (
     <div className={compact ? "space-y-3" : "prism-panel p-5 md:p-6"}>

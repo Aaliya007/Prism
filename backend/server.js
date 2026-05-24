@@ -8,7 +8,11 @@ import githubRoutes from "./routes/githubWebhook.js";
 const app = express();
 const PORT = getEnv("PORT") || 5000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/", (req, res) => {
@@ -16,7 +20,17 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/integrations", (req, res) => {
-  res.json(getIntegrationStatus());
+  console.log("GitHub token:", Boolean(process.env.GITHUB_TOKEN));
+  console.log("Gemini key:", Boolean(process.env.GEMINI_API_KEY));
+
+  res.json({
+    github: {
+      configured: Boolean(process.env.GITHUB_TOKEN),
+    },
+    gemini: {
+      configured: Boolean(process.env.GEMINI_API_KEY),
+    },
+  });
 });
 
 app.use("/github", githubRoutes);

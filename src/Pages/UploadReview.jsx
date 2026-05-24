@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import IntegrationStatus from "../components/IntegrationStatus.jsx";
-import { API_BASE, fetchIntegrationStatus } from "../lib/api.js";
+import { API_BASE, apiUrl, fetchIntegrationStatus } from "../lib/api.js";
 
 export default function UploadReview() {
   const navigate = useNavigate();
@@ -73,7 +73,7 @@ export default function UploadReview() {
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE}/analyze-pr`, {
+      const response = await fetch(apiUrl("/analyze-pr"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -17,11 +17,11 @@ export function getEnv(name) {
 }
 
 export function hasGeminiKey() {
-  return getEnv("GEMINI_API_KEY").length > 0;
+  return Boolean(process.env.GEMINI_API_KEY);
 }
 
 export function hasGithubToken() {
-  return getEnv("GITHUB_TOKEN").length > 0;
+  return Boolean(process.env.GITHUB_TOKEN);
 }
 
 export function getGeminiModelLabel() {
