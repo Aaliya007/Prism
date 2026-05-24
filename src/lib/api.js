@@ -1,6 +1,8 @@
 export const API_BASE = import.meta.env.VITE_API_BASE;
 export const DISPLAY_API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 
+console.log("[PRISM] VITE_API_BASE", import.meta.env.VITE_API_BASE);
+
 export function apiUrl(path) {
   const trimmed = String(path || "").trim();
 
