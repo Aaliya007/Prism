@@ -298,22 +298,22 @@ export default function LandingPage() {
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               {[
                 {
-                  label: "Pull requests analyzed",
-                  value: "128k",
+                  label: "Multi Agent AI Review",
+                  value: "Code Intelligence",
                   border: "border-cyan-400/25",
                   accent: "from-cyan-500/18 to-cyan-400/5",
                   valueColor: "text-cyan-200",
                 },
                 {
-                  label: "Review hours saved",
-                  value: "4.2h",
+                  label: "Risk Detection",
+                  value: "Security+Bugs",
                   border: "border-violet-400/25",
                   accent: "from-violet-500/18 to-violet-400/5",
                   valueColor: "text-violet-200",
                 },
                 {
-                  label: "Merge confidence",
-                  value: "91%",
+                  label: "Merge Insights",
+                  value: "Heatmap Analysis",
                   border: "border-fuchsia-400/25",
                   accent: "from-fuchsia-500/18 to-fuchsia-400/5",
                   valueColor: "text-fuchsia-200",
@@ -321,12 +321,12 @@ export default function LandingPage() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className={`rounded-xl border bg-gradient-to-br p-4 backdrop-blur-sm ${stat.border} ${stat.accent}`}
+                  className={`rounded-2xl border bg-gradient-to-br p-4 backdrop-blur-sm ${stat.border} ${stat.accent}`}
                 >
                   <div className="prism-eyebrow text-prism-muted normal-case tracking-normal">
                     {stat.label}
                   </div>
-                  <div className={`mt-2 prism-stat ${stat.valueColor}`}>{stat.value}</div>
+                  <div className={`mt-2 prism-stat text-l ${stat.valueColor}`}>{stat.value}</div>
                 </div>
               ))}
             </div>
@@ -472,140 +472,266 @@ export default function LandingPage() {
       </section>
     );
   }
+function FeaturesSection() {
+  const cards = [
+    {
+      title: "Human-Aware Risk Detection",
+      body: "PRISM models contributor history, reviewer pressure, code ownership patterns, and change volatility before the merge happens.",
+      size: "lg:col-span-2",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" className="h-9 w-9 text-cyan-200">
+          <path
+            d="M12 3l7 3v5c0 4.7-2.8 8.9-7 10-4.2-1.1-7-5.3-7-10V6l7-3Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          />
+          <path
+            d="M9.5 12.5l1.7 1.7 3.8-4.2"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Multi-Agent AI Review",
+      body: "Security, performance, maintainability, and workflow agents review the same pull request in parallel.",
+      size: "",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" className="h-9 w-9 text-violet-200">
+          <path
+            d="M12 4v4M12 16v4M4 12h4M16 12h4"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1.7" />
+          <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+          <circle cx="20" cy="12" r="1.5" fill="currentColor" />
+          <circle cx="12" cy="20" r="1.5" fill="currentColor" />
+          <circle cx="4" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+      ),
+    },
+    {
+      title: "AI Suggestions Engine",
+      body: "Actionable fixes: line-specific fixes, file-grouped actions, and PR-wide improvements.",
+      size: "",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" className="h-9 w-9 text-emerald-200">
+          <path
+            d="M8 12l3 3 5-6"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <rect x="3.5" y="4" width="17" height="16" rx="4" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
+      ),
+    },
+    {
+      title: "Engineering Timeline Intelligence",
+      body: "PRISM turns review history into a readable timeline of risk, discussion, ownership, and merge readiness.",
+      size: "lg:col-span-2",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" className="h-9 w-9 text-fuchsia-200">
+          <path
+            d="M6 7h12M6 12h6M6 17h12"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          <circle cx="17" cy="12" r="2.2" fill="currentColor" />
+        </svg>
+      ),
+    },
+  ];
 
-  function FeaturesSection() {
-    const cards = [
-      {
-        title: "Human-Aware Risk Detection",
-        body: "PRISM models contributor history, reviewer pressure, code ownership patterns, and change volatility before the merge happens.",
-        size: "lg:col-span-2 lg:row-span-2",
-      },
-      {
-        title: "Multi-Agent AI Review",
-        body: "Security, performance, maintainability, and workflow agents review the same pull request in parallel.",
-        size: "",
-      },
-      {
-        title: "AI Debate Mode",
-        body: "Agents can challenge each other on uncertain findings to reduce noisy or low-confidence suggestions.",
-        size: "",
-      },
-      {
-        title: "Engineering Timeline Intelligence",
-        body: "PRISM turns review history into a readable timeline of risk, discussion, ownership, and merge readiness.",
-        size: "lg:col-span-2",
-      },
-    ];
+  return (
+    <section id="features" className="relative prism-section overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-8%] top-16 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute right-[-6%] top-24 h-72 w-72 rounded-full bg-violet-500/12 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/10 blur-3xl" />
+      </div>
 
-    return (
-      <section id="features" className="relative prism-section">
-        <div className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
-          <div className="reveal max-w-2xl">
-            <div className="mb-5 prism-eyebrow text-2xl text-violet-300">
-              Core features
-            </div>
-            <h2 className="prism-h2 text-white">
-              Built for teams shipping serious software.
-            </h2>
-            <p className="mt-5 prism-body-lg text-prism-muted">
-              This is not a wrapper on top of linting. PRISM is an engineering
-              intelligence layer designed for code review at team scale.
-            </p>
+      <div className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
+        <div className="reveal max-w-2xl">
+          <div className="mb-5 prism-eyebrow text-2xl text-violet-300">
+            Core features
           </div>
+          <h2 className="prism-h2 text-white">
+            Built for teams shipping serious software.
+          </h2>
+          <p className="mt-5 prism-body-lg text-prism-muted">
+            This is not a wrapper on top of linting. PRISM is an engineering
+            intelligence layer designed for code review at team scale.
+          </p>
+        </div>
 
-          <div className="mt-14 md:mt-16 grid auto-rows-[minmax(300px,auto)] gap-6 md:gap-8 lg:grid-cols-3">
-            {cards.map((card, i) => (
-              <div
-                key={card.title}
-                className={`reveal group relative overflow-hidden rounded-[30px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(13,21,31,0.95),rgba(9,16,25,0.95))] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.26)] ${card.size}`}
-                style={{ transitionDelay: `${i * 70}ms` }}
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(103,232,249,0.08),transparent_26%)] opacity-70" />
-                <div className="absolute right-6 top-6 h-20 w-20 rounded-[24px] border border-white/[0.08] bg-white/[0.03] backdrop-blur-md transition duration-300 group-hover:scale-105" />
+        <div className="mt-14 md:mt-16 grid auto-rows-[minmax(300px,auto)] gap-6 md:gap-8 lg:grid-cols-3">
+          {cards.map((card, i) => (
+            <div
+              key={card.title}
+              className={`reveal group relative overflow-hidden rounded-[30px] p-[1px] shadow-[0_24px_70px_rgba(0,0,0,0.32)] ${card.size}`}
+              style={{ transitionDelay: `${i * 70}ms` }}
+            >
+              <div className="absolute inset-0 rounded-[30px] bg-[linear-gradient(135deg,rgba(103,232,249,0.45),rgba(168,85,247,0.28),rgba(236,72,153,0.26),rgba(255,255,255,0.08))]" />
 
-                <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-between gap-6">
-                  <div className="max-w-[32rem] pr-24 pt-1">
-                    <div className="prism-eyebrow text-cyan-200">
-                      Feature {i + 1}
+              <div className="relative h-full rounded-[29px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(10,17,28,0.96),rgba(7,13,22,0.97))] p-7">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(103,232,249,0.12),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(168,85,247,0.10),transparent_28%)] opacity-90" />
+
+                <div className="absolute right-6 top-6 z-20 flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/15 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04))] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_30px_rgba(34,211,238,0.10)] backdrop-blur-md transition duration-300 group-hover:scale-105 group-hover:border-cyan-300/40">
+                  <div className="absolute inset-[6px] rounded-[18px] border border-white/10 bg-[#0c1622]/80" />
+                  <div className="relative z-10">{card.icon}</div>
+                </div>
+
+                {i === 0 ? (
+                  <div className="relative z-10 flex h-full min-h-[520px] flex-col">
+                    <div className="pr-24 pt-1">
+                      <div className="prism-eyebrow text-cyan-200">
+                        Feature {i + 1}
+                      </div>
+                      <h3 className="mt-3 prism-h3 text-white">
+                        {card.title}
+                      </h3>
+                      <p className="mt-4 prism-body max-w-[34rem] text-prism-muted">
+                        {card.body}
+                      </p>
                     </div>
-                    <h3 className="mt-3 prism-h3 text-white">
-                      {card.title}
-                    </h3>
-                    <p className="mt-4 prism-body text-prism-muted">
-                      {card.body}
-                    </p>
-                  </div>
 
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm">
-                    {i === 0 && (
+                    <div className="mt-6 overflow-hidden rounded-[24px] border border-cyan-300/15 bg-[#09111c]">
+                      <div className="relative h-[260px] w-full md:h-[300px]">
+                        <img
+                          src="https://tse1.mm.bing.net/th/id/OIP.zPZexzvO7yd1CWKc8_9ioQHaEP?pid=Api&P=0&h=180"
+                          alt="Human-aware risk detection visualization"
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.08),rgba(3,7,18,0.24))]" />
+                      </div>
+                    </div>
+
+                    <div className="mt-5 rounded-2xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 backdrop-blur-sm">
                       <div className="grid grid-cols-3 gap-3">
-                        <div className="rounded-xl bg-[#0b131d] p-3">
-                          <div className="text-xs text-prism-muted">Ownership drift</div>
+                        <div className="rounded-xl border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(14,23,35,0.95),rgba(10,18,28,0.95))] p-3">
+                          <div className="text-xs text-cyan-100/60">Ownership drift</div>
                           <div className="mt-1 text-lg font-semibold text-white">High</div>
                         </div>
-                        <div className="rounded-xl bg-[#0b131d] p-3">
-                          <div className="text-xs text-prism-muted">Reviewer load</div>
-                          <div className="mt-1 text-lg font-semibold text-white">92%</div>
+                        <div className="rounded-xl border border-violet-400/15 bg-[linear-gradient(180deg,rgba(14,23,35,0.95),rgba(10,18,28,0.95))] p-3">
+                          <div className="text-xs text-violet-100/60">Reviewer load</div>
+                          <div className="mt-1 text-lg font-semibold text-white">High</div>
                         </div>
-                        <div className="rounded-xl bg-[#0b131d] p-3">
-                          <div className="text-xs text-prism-muted">Context gap</div>
+                        <div className="rounded-xl border border-fuchsia-400/15 bg-[linear-gradient(180deg,rgba(14,23,35,0.95),rgba(10,18,28,0.95))] p-3">
+                          <div className="text-xs text-fuchsia-100/60">Context gap</div>
                           <div className="mt-1 text-lg font-semibold text-white">Elevated</div>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-between gap-6">
+                    <div className="max-w-[32rem] pr-24 pt-1">
+                      <div className="prism-eyebrow text-cyan-200">
+                        Feature {i + 1}
+                      </div>
+                      <h3 className="mt-3 prism-h3 text-white">
+                        {card.title}
+                      </h3>
+                      <p className="mt-4 prism-body text-prism-muted">
+                        {card.body}
+                      </p>
+                    </div>
 
-                    {i === 1 && (
-                      <div className="space-y-2">
-                        {["Security agent active", "Performance agent active", "Maintainability agent active"].map(
-                          (label) => (
+                    <div className="rounded-2xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 backdrop-blur-sm">
+                      {i === 1 && (
+                        <div className="space-y-2">
+                          {[
+                            "Security agent active",
+                            "Performance agent active",
+                            "Maintainability agent active",
+                          ].map((label, idx) => (
                             <div
                               key={label}
-                              className="flex items-center justify-between rounded-xl bg-[#0b131d] px-3 py-2"
+                              className="flex items-center justify-between rounded-xl border px-3 py-2"
+                              style={{
+                                borderColor:
+                                  idx === 0
+                                    ? "rgba(110,231,183,0.15)"
+                                    : idx === 1
+                                    ? "rgba(103,232,249,0.15)"
+                                    : "rgba(196,181,253,0.15)",
+                                background:
+                                  idx === 0
+                                    ? "linear-gradient(180deg, rgba(6,24,20,0.96), rgba(8,18,22,0.96))"
+                                    : idx === 1
+                                    ? "linear-gradient(180deg, rgba(9,23,31,0.96), rgba(10,18,28,0.96))"
+                                    : "linear-gradient(180deg, rgba(19,16,36,0.96), rgba(10,18,28,0.96))",
+                              }}
                             >
                               <span className="text-sm text-slate-200">{label}</span>
                               <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.7)]"></span>
                             </div>
-                          )
-                        )}
-                      </div>
-                    )}
-
-                    {i === 2 && (
-                      <div className="space-y-2">
-                        <div className="rounded-xl bg-[#0b131d] p-3 text-sm text-slate-200">
-                          Security agent disagrees with severity estimate.
+                          ))}
                         </div>
-                        <div className="rounded-xl bg-[#0b131d] p-3 text-sm text-slate-200">
-                          Consensus updated after organizational context check.
-                        </div>
-                      </div>
-                    )}
+                      )}
 
-                    {i === 3 && (
-                      <div className="grid gap-2">
-                        {[
-                          "09:12 PR ingested",
-                          "09:15 Secret flagged",
-                          "09:18 Bundle regression predicted",
-                        ].map((event) => (
-                          <div
-                            key={event}
-                            className="rounded-xl bg-[#0b131d] px-3 py-2 text-sm text-slate-200"
-                          >
-                            {event}
+                      {i === 2 && (
+                        <div className="space-y-2">
+                          <div className="rounded-xl border border-emerald-400/15 bg-[linear-gradient(180deg,rgba(9,27,22,0.96),rgba(10,18,28,0.96))] p-3 text-sm text-slate-200">
+                            Critical fixes and general improvements.
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <div className="rounded-xl border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(10,24,31,0.96),rgba(10,18,28,0.96))] p-3 text-sm text-slate-200">
+                            File grouped actions and architecture guidance.
+                          </div>
+                        </div>
+                      )}
+
+                      {i === 3 && (
+                        <div className="grid gap-2">
+                          {[
+                            "09:12 PR ingested",
+                            "09:15 Secret flagged",
+                            "09:18 Bundle regression predicted",
+                          ].map((event, idx) => (
+                            <div
+                              key={event}
+                              className="rounded-xl px-3 py-2 text-sm text-slate-200"
+                              style={{
+                                border: "1px solid",
+                                borderColor:
+                                  idx === 0
+                                    ? "rgba(103,232,249,0.16)"
+                                    : idx === 1
+                                    ? "rgba(244,114,182,0.16)"
+                                    : "rgba(196,181,253,0.16)",
+                                background:
+                                  idx === 0
+                                    ? "linear-gradient(180deg, rgba(10,24,31,0.96), rgba(10,18,28,0.96))"
+                                    : idx === 1
+                                    ? "linear-gradient(180deg, rgba(35,14,28,0.96), rgba(10,18,28,0.96))"
+                                    : "linear-gradient(180deg, rgba(21,16,37,0.96), rgba(10,18,28,0.96))",
+                              }}
+                            >
+                              {event}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      </section>
-    );
-  }
+      </div>
+    </section>
+  );
+}
 
   function WorkflowSection() {
     const steps = [

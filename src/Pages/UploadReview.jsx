@@ -64,7 +64,7 @@ export default function UploadReview() {
 
     if (!integrationStatus?.gemini?.configured) {
       setError(
-        "Gemini API key is not loaded on the server. Add GEMINI_API_KEY to backend/.env and restart the backend."
+        "Gemini API key is not loaded on the server."
       );
       return;
     }
