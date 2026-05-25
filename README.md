@@ -1,20 +1,131 @@
-<<<<<<< HEAD
-# React + Vite
+# ⬡ Prism: Autonomous Code Intelligence
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Prism is an event-driven, multi-agent AI code review cockpit engineered to eliminate pull-request fatigue. By combining a client-side local heuristic analytics engine with specialized, parallel AI micro-agents, Prism translates raw git mutations into actionable architectural, performance, and security insights in seconds.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Key Features
 
-## React Compiler
+* **Real-Time Event Interception:** Low-latency GitHub Webhooks hook directly into the DevOps lifecycle to automatically capture and analyze PR payloads the moment they are opened.
+* **On-Demand Repo Sandbox:** Safely scan and audit any public repository context (like Kubernetes) on the fly without polluting background event queues.
+* **Client-Side Local Heuristics:** A deterministic, zero-token-overhead evaluation layer that instantly scores code complexity baseline data entirely offline.
+* **Parallel Multi-Agent Orchestration:** Side-steps slow serial prompt chains by spinning up concurrent specialized agents analyzing Security, Performance, and Maintainability simultaneously.
+* **Interactive Code Review Panel:** Highly intuitive UI dashboard designed for seamless navigation, complete with context-aware code diff layouts and suggestion workflows.
+* **Smart Suggestion Box Engine:** A multi-tiered review interface that intelligently triages code quality findings into structured, actionable feedback categories:
+  * **Architectural & Process Rules:** High-level system-wide evaluations that ensure your pull requests align with organizational workflow baselines and pattern constraints.
+  * **Line-Level Code Diffs:** Granular, contextual inline suggestions mapping out precise syntax enhancements directly against altered files.
+  * **File-Specific Critical Fixes:** Immediate priority flags targeting complex file mutations, security vulnerabilities, or performance optimization requirements.
+---
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## 🛠️ Tech Stack
 
-Note: This will impact Vite dev & build performances.
+### Frontend
+* **Core Framework:** React (built with Vite for lightning-fast bundling)
+* **Styling & Theme UI:** Tailwind CSS & Custom design tokens 
+* **State & Networking:** Client-side heuristic logic and integrated fetch pipelines
 
-## Expanding the ESLint configuration
+### Backend & DevOps
+* **Server Architecture:** Express.js (Node.js runtime environment)
+* **AI Pipelines:** Gemini 1.5 Flash API (multi-agent parallelization configuration)
+* **Integrations:** GitHub REST API & Real-time Webhook listeners
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-=======
+---
+
+## 📂 Project Structure
+
+Prism uses a structured full-stack layout isolating our server architecture from the interactive dashboard workspace:
+
+```text
+prism/
+├── backend/                  # Express.js Server Application
+│   ├── config/               # Environment and API Initializations
+│   │   ├── env.js
+│   │   └── geminiModels.js
+│   ├── lib/                  # Server-side Shared Utilities
+│   ├── prompts/              # System Prompts for Specialized Agents
+│   │   └── systemPrompt.js
+│   ├── routes/               # API Route Handlers (Webhook Listeners & Sandbox)
+│   ├── services/             # Core Logic Flow Handlers
+│   │   ├── analyzePullRequest.js
+│   │   └── runAIReview.js
+│   ├── geminiServer.js       # Core Agent Orchestrator
+│   ├── server.js             # Application Entry Point
+│   └── .env                  # Backend Configuration File
+│
+├── public/                   # Static Visual Assets & Icons
+│   ├── favicon.svg
+│   └── icons.svg
+│
+├── src/                      # React Client Application
+│   ├── assets/               # Media Components
+│   ├── components/           # Reusable Modular UI Views
+│   ├── lib/                  # Core Client-Side Utilities
+│   │   ├── api.js            # Network Interaction Wrappers
+│   │   ├── buildSuggestionsView.js
+│   │   ├── formatRelativeTime.js
+│   │   ├── integrations.js
+│   │   └── mergeDecision.js  # Heuristic Logic Rules
+│   ├── pages/                # High-Level Layout Views (Dashboard, Input)
+│   ├── App.css
+│   ├── App.jsx               # Client Routing Setup
+│   ├── index.css
+│   ├── main.jsx              # Vite UI Mounting Entry
+│   └── prism-theme.css       # Core Dashboard Color Tokens
+│
+├── index.html                # Client Entry Template
+├── vite.config.js            # Vite Environment Settings
+└── package.json              # Main Project Manifest
+
+# ==========================================
+# ⚙️ 1. CLONE & NAVIGATE TO PROJECT
+# ==========================================
+git clone https://github.com/Aaliya007/Prism.git
+cd Prism
+
+# ==========================================
+# ⚙️ 2. CONFIGURE ENVIRONMENT VARIABLES
+# ==========================================
+# Creating the .env inside the backend folder
+cat <<EOF > backend/.env
+PORT=5000
+GEMINI_API_KEY=your_gemini_api_key_here
+GITHUB_TOKEN=your_github_personal_access_token_here
+EOF
+
+# ==========================================
+# ⚙️ 3. INSTALL ALL DEPENDENCIES
+# ==========================================
+# Install root/client workspace dependencies
+npm install
+
+# Navigate into backend and install server dependencies
+cd backend && npm install && cd ..
+
+# ==========================================
+# ⚙️ 4. RUNNING THE PROJECT LOCALLY
+# ==========================================
+# Open two separate terminal windows/tabs and run these:
+
+# --- TERMINAL 1 (Start the Backend Server) ---
+cd backend && node server.js
+
+# --- TERMINAL 2 (Start the Frontend Client) ---
+# (Open a fresh terminal window back at the root directory)
+npm run dev
+
+
+# ==============================================================================
+# 🔮 PRISM FUTURE IMPROVEMENTS ROADMAP 
+# ==============================================================================
+# 1. Active Downstream Patch Execution:
+#    Transitioning frontend actions into automated system writes using full-loop 
+#    GitHub REST write permissions to automatically push user-approved diffs 
+#    straight to origin branches.
+#
+# 2. Custom Security Rules:
+#    Allowing developer workspaces to append local config files to supplement 
+#    the heuristic engine parameters.
+#
+# 3. Deep Slack/Teams Integration:
+#    Relaying critical warnings from the multi-agent queue straight to 
+#    development communications streams instantly.
