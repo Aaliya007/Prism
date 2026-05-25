@@ -80,17 +80,13 @@ prism/
 
 ## ⚙️ Installation and Setup
 
-# ==========================================
 # ⚙️ 1. CLONE & NAVIGATE TO PROJECT
-# ==========================================
 ```text
 git clone https://github.com/Aaliya007/Prism.git
 cd Prism
 ```
 
-# ==========================================
 # ⚙️ 2. CONFIGURE ENVIRONMENT VARIABLES
-# ==========================================
 # Creating the .env inside the backend folder
 ```text
 cat <<EOF > backend/.env
@@ -100,9 +96,7 @@ GITHUB_TOKEN=your_github_personal_access_token_here
 EOF
 ```
 
-# ==========================================
 # ⚙️ 3. INSTALL ALL DEPENDENCIES
-# ==========================================
 # Install root/client workspace dependencies
 ```text
 npm install
@@ -112,9 +106,7 @@ npm install
 cd backend && npm install 
 ```
 
-# ==========================================
 # ⚙️ 4. RUNNING THE PROJECT LOCALLY
-# ==========================================
 # Open two separate terminal windows/tabs and run these:
 
 # --- TERMINAL 1 (Start the Backend Server) ---
@@ -127,9 +119,8 @@ cd backend && node server.js
 npm run dev
 ```
 
-# ==============================================================================
 # 🔮 PRISM FUTURE IMPROVEMENTS ROADMAP 
-# ==============================================================================
+
 # 1. Active Downstream Patch Execution:
 #    Transitioning frontend actions into automated system writes using full-loop 
 #    GitHub REST write permissions to automatically push user-approved diffs 
