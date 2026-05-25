@@ -75,31 +75,42 @@ prism/
 ├── index.html                # Client Entry Template
 ├── vite.config.js            # Vite Environment Settings
 └── package.json              # Main Project Manifest
+```
+
+
+## ⚙️ Installation and Setup
 
 # ==========================================
 # ⚙️ 1. CLONE & NAVIGATE TO PROJECT
 # ==========================================
+```text
 git clone https://github.com/Aaliya007/Prism.git
 cd Prism
+```
 
 # ==========================================
 # ⚙️ 2. CONFIGURE ENVIRONMENT VARIABLES
 # ==========================================
 # Creating the .env inside the backend folder
+```text
 cat <<EOF > backend/.env
 PORT=5000
 GEMINI_API_KEY=your_gemini_api_key_here
 GITHUB_TOKEN=your_github_personal_access_token_here
 EOF
+```
 
 # ==========================================
 # ⚙️ 3. INSTALL ALL DEPENDENCIES
 # ==========================================
 # Install root/client workspace dependencies
+```text
 npm install
-
+```
 # Navigate into backend and install server dependencies
-cd backend && npm install && cd ..
+```text
+cd backend && npm install 
+```
 
 # ==========================================
 # ⚙️ 4. RUNNING THE PROJECT LOCALLY
@@ -107,12 +118,14 @@ cd backend && npm install && cd ..
 # Open two separate terminal windows/tabs and run these:
 
 # --- TERMINAL 1 (Start the Backend Server) ---
+```text
 cd backend && node server.js
-
+```
 # --- TERMINAL 2 (Start the Frontend Client) ---
 # (Open a fresh terminal window back at the root directory)
+```text
 npm run dev
-
+```
 
 # ==============================================================================
 # 🔮 PRISM FUTURE IMPROVEMENTS ROADMAP 
