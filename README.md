@@ -119,17 +119,3 @@ cd backend && node server.js
 npm run dev
 ```
 
-# 🔮 PRISM FUTURE IMPROVEMENTS ROADMAP 
-
-# 1. Active Downstream Patch Execution:
-#    Transitioning frontend actions into automated system writes using full-loop 
-#    GitHub REST write permissions to automatically push user-approved diffs 
-#    straight to origin branches.
-#
-# 2. Custom Security Rules:
-#    Allowing developer workspaces to append local config files to supplement 
-#    the heuristic engine parameters.
-#
-# 3. Deep Slack/Teams Integration:
-#    Relaying critical warnings from the multi-agent queue straight to 
-#    development communications streams instantly.
