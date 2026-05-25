@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import IntegrationStatus from "../components/IntegrationStatus.jsx";
@@ -249,6 +249,33 @@ function Header({ sidebarOpen, setSidebarOpen, setGithubLiveOpen, githubLiveStat
         </div>
       </div>
     </header>
+  );
+}
+
+function getReviewIdentity(review) {
+  if (!review) return "";
+  if (review.prUrl) return review.prUrl;
+  if (review.repoName || review.prNumber) {
+    return `${review.repoName ?? ""}#${review.prNumber ?? ""}`;
+  }
+  return "";
+}
+
+function SearchModeNotice({ onReturnToLive }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-300/20 bg-cyan-300/[0.07] px-4 py-3 shadow-[0_12px_34px_rgba(77,208,255,0.08)]">
+      <div className="flex items-center gap-2 prism-label text-cyan-100">
+        <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.75)]" />
+        Viewing Ad-hoc Sandbox - live webhook updates are paused
+      </div>
+      <button
+        type="button"
+        onClick={onReturnToLive}
+        className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 prism-label font-semibold text-cyan-50 transition hover:border-cyan-200/45 hover:bg-cyan-300/15"
+      >
+        Return to Live Feed
+      </button>
+    </div>
   );
 }
 
@@ -613,10 +640,25 @@ export default function Dashboard() {
   const [githubLiveStatus, setGithubLiveStatus] = useState(null);
   const [githubLiveSyncedAt, setGithubLiveSyncedAt] = useState(null);
   const [githubLiveError, setGithubLiveError] = useState("");
+  const [viewMode, setViewMode] = React.useState('webhook');
   const applyTimeoutsRef = useRef({});
   const lastAppliedAnalysisKeyRef = useRef(null);
 
   const data = prismData;
+
+  function applyLatestWebhookAnalysis() {
+    const event = githubLiveStatus?.latestEvent;
+    const analysis = githubLiveStatus?.analysisResult;
+
+    setViewMode('webhook');
+
+    if (event?.status === "completed" && analysis) {
+      const key = `${event.prUrl}-${event.completedAt}`;
+      lastAppliedAnalysisKeyRef.current = key;
+      localStorage.setItem("prismData", JSON.stringify(analysis));
+      setPrismData(analysis);
+    }
+  }
 
   function handleApplySuggestion(id) {
     setSuggestionStatus((prev) => ({ ...prev, [id]: "loading" }));
@@ -689,8 +731,22 @@ export default function Dashboard() {
           const key = `${event.prUrl}-${event.completedAt}`;
           if (key !== lastAppliedAnalysisKeyRef.current) {
             lastAppliedAnalysisKeyRef.current = key;
-            localStorage.setItem("prismData", JSON.stringify(analysis));
-            setPrismData(analysis);
+            const currentReviewIdentity = getReviewIdentity(prismData);
+            const incomingWebhookIdentity = getReviewIdentity(analysis);
+            const hasAdHocReview =
+              currentReviewIdentity &&
+              incomingWebhookIdentity &&
+              currentReviewIdentity !== incomingWebhookIdentity;
+
+            if (hasAdHocReview && viewMode === 'webhook') {
+              setViewMode('search');
+              return;
+            }
+
+            if (analysis && viewMode === 'webhook') {
+              localStorage.setItem("prismData", JSON.stringify(analysis));
+              setPrismData(analysis);
+            }
           }
         }
       } catch (err) {
@@ -707,7 +763,7 @@ export default function Dashboard() {
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, []);
+  }, [prismData, viewMode]);
 
   const integrationStatus = integrations;
 
@@ -855,6 +911,10 @@ export default function Dashboard() {
 
           <main className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-7 px-4 py-6 md:gap-8 md:px-6 md:py-8">
+              {viewMode === 'search' ? (
+                <SearchModeNotice onReturnToLive={applyLatestWebhookAnalysis} />
+              ) : null}
+
               {!data ? <EmptyState navigate={navigate} /> : null}
               <Hero
                 data={data}
